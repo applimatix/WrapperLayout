@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -97,8 +98,33 @@ public class WrapperLayout extends FrameLayout {
         }
 
         content.removeView(this);
-        parent.addView(this);
 
-        parent.requestLayout();
+        View wrapperChild;
+
+        if (getChildCount() == 1) {
+            wrapperChild = getChildAt(0);
+            if (wrapperChild instanceof ViewGroup && parent.getParent() instanceof ViewGroup) {
+                // wrapperChild is a ViewGroup so lets replace the parent ViewGroup with it
+                ViewGroup grandParent = (ViewGroup) parent.getParent();
+                ViewGroup.LayoutParams params = parent.getLayoutParams();
+                wrapperChild.setLayoutParams(params);
+                removeView(wrapperChild);
+                int idx = grandParent.indexOfChild(parent);
+                grandParent.removeView(parent);
+                grandParent.addView(wrapperChild, idx);
+            }
+            else {
+                // wrapperChild is not a ViewGroup
+                removeView(wrapperChild);
+                parent.addView(wrapperChild);
+            }
+        }
+        else {
+            for (int i = 0; i < getChildCount(); i++) {
+                wrapperChild = getChildAt(i);
+                removeView(wrapperChild);
+                parent.addView(wrapperChild);
+            }
+        }
     }
 }
